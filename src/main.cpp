@@ -9,7 +9,12 @@
 
 #include <stdio.h>
 
-#define FRAME_INTERVAL 0.1 // High FPS leads to some glitching in the frame
+#define FRAME_INTERVAL 0.1 
+// Seconds
+// High FPS leads to some glitching in the frame
+
+#define HTTP_INTERVAL 2000
+// Milliseconds
 
 const char *UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36 OPR/75.0.3969.218";
 
@@ -104,7 +109,7 @@ void loop()
 
   if(!first_update) first_update = true;
 
-  delay(2000);
+  delay(HTTP_INTERVAL);
 }
 
 void FrameUpdate()
