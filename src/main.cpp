@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 
+#define FRAME_INTERVAL 0.1 // High FPS leads to some glitching in the frame
+
 const char *UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36 OPR/75.0.3969.218";
 
 long p_follower = 0;
@@ -65,14 +67,27 @@ void setup()
   tft.println(WiFi.localIP());
 
   // Get UID from Serial Port
+  /*
+  Serial.println("Please input your UID:");
+  while (Serial.available() == 0) {
+    delay(100);
+  }
+  UID = Serial.readStringUntil('\n');
+  UID.trim();
+  Serial.println(UID);
+  */
+
   UID = "392505232"; 
-  // Diana, my Diana, heh heh, my Diana, take me, take me on, Diana!
+  // UID = "672328094";
+  
+  // 392505232 Andou Inori
+  // 672328094 Diana, my Diana, heh heh, my Diana, take me, take me on, Diana!
   // TO DO: build a better interact method to change UID
   tft.print("UID:");
   tft.println(UID);
 
   // Attach ticker to frame
-  ScreenUpdate.attach(0.1, FrameUpdate);
+  ScreenUpdate.attach( FRAME_INTERVAL, FrameUpdate);
 
 }
 
@@ -89,34 +104,27 @@ void loop()
 
   if(!first_update) first_update = true;
 
-  delay(1000);
+  delay(2000);
 }
 
 void FrameUpdate()
 {
   static long circle_radius = 10;
-  static long radius_inc = 1;
+  static long radius_inc = 2;
 
   if(first_update)
   {
-    tft.setCursor(0, 200);
     if(live_status == 0||live_status == 2)
     {
-      tft.setTextColor(TFT_BLUE);
-      tft.fillRect(170, 170, 60, 60, TFT_BLACK);
-      tft.fillCircle(200, 200, 30, TFT_BLUE);
-      tft.print("Off Stream");
+      // tft.fillRect(170, 170, 60, 60, TFT_BLACK);
+      // tft.fillCircle(200, 200, 30, TFT_BLUE);
     }
     else if(live_status == 1)
     {
-      tft.setTextColor(TFT_GREENYELLOW);
       tft.fillRect(170, 170, 60, 60, TFT_BLACK);
       tft.fillCircle(200, 200, circle_radius, TFT_GREENYELLOW);
       circle_radius += radius_inc;
-      if(circle_radius>=25) radius_inc = -1;
-      else if(circle_radius<=10) radius_inc = 1;
-      
-      tft.print("On  Stream");
+      if(circle_radius>=25||circle_radius<=10) radius_inc = -radius_inc;
     }
 
   }
@@ -190,6 +198,20 @@ void getLiveStatus(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
       return;
     }
     live_status = jsonBuffer["data"]["live_status"];
+    tft.setCursor(0, 200);
+    if(live_status == 0||live_status == 2)
+    {
+      tft.setTextColor(TFT_BLUE);
+      tft.fillRect(0, 200, 240, 40, TFT_BLACK);
+      tft.fillCircle(200, 200, 30, TFT_BLUE);
+      tft.print("Off Stream");
+    }
+    else if(live_status == 1)
+    {
+      tft.setTextColor(TFT_GREENYELLOW);
+      tft.fillRect(0, 200, 240, 40, TFT_BLACK);
+      tft.print("On  Stream");
+    }
   }
   else
   {
