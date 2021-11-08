@@ -5,9 +5,13 @@
 #include <SPI.h>
 #include <TFT_eSPI.h>
 
-#include <wifi_config.h>
-
 #include <stdio.h>
+
+
+// User Includes
+#include "wifi_config.h"
+#include "Streamer.h"
+
 
 #define FRAME_INTERVAL 0.1 
 // Seconds
@@ -19,25 +23,27 @@
 const char *UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36 OPR/75.0.3969.218";
 
 long p_follower = 0;
-long follower = 0;
-long room_id = 0;
-long online = 0;
-int live_status = 0;
+// long follower = 0;
+// long room_id = 0;
+// int live_status = 0;
 bool first_update = false;
 
 
 String UID = "";
-String LiverInfoUrl = "http://api.live.bilibili.com/live_user/v1/Master/info?uid=";
-String RoomInfoUrl = "http://api.live.bilibili.com/room/v1/Room/room_init?id=";
+// String LiverInfoUrl = "http://api.live.bilibili.com/live_user/v1/Master/info?uid=";
+// String RoomInfoUrl = "http://api.live.bilibili.com/room/v1/Room/room_init?id=";
 
 void getFollower(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
 void getLiveStatus(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
+
+void FrameInfoUpdate(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
 void FrameUpdate();
 String int2str(int num);
 
 WiFiClient Connection = WiFiClient();
 TFT_eSPI tft = TFT_eSPI();
 Ticker ScreenUpdate;
+Streamer Bilibili_Vup;
 
 
 void setup() 
@@ -71,6 +77,7 @@ void setup()
   Serial.println(WiFi.localIP());
   tft.println(WiFi.localIP());
 
+  
   // Get UID from Serial Port
   /*
   Serial.println("Please input your UID:");
@@ -82,12 +89,11 @@ void setup()
   Serial.println(UID);
   */
 
-  UID = "392505232"; 
-  // UID = "672328094";
-  
-  // 392505232 Andou Inori
+  UID = "742139"; 
+  Bilibili_Vup = Streamer(UID);
+  // 742139 Follow Jzjerry_Official PLZ!
+  // 392505232 Andou Inari
   // 672328094 Diana, my Diana, heh heh, my Diana, take me, take me on, Diana!
-  // TO DO: build a better interact method to change UID
   tft.print("UID:");
   tft.println(UID);
 
@@ -101,12 +107,8 @@ void loop()
   DynamicJsonDocument jsonBuffer(1024); // ArduinoJson V6
   HTTPClient http;
 
-  http.setUserAgent(UserAgent);
-  getFollower(http, jsonBuffer);
+  FrameInfoUpdate(http, jsonBuffer);
   
-  http.setUserAgent(UserAgent);
-  getLiveStatus(http, jsonBuffer);
-
   if(!first_update) first_update = true;
 
   delay(HTTP_INTERVAL);
@@ -119,12 +121,12 @@ void FrameUpdate()
 
   if(first_update)
   {
-    if(live_status == 0||live_status == 2)
+    if(Bilibili_Vup.getLiveStatus() != LIVE_ONSTREAM)
     {
       // tft.fillRect(170, 170, 60, 60, TFT_BLACK);
       // tft.fillCircle(200, 200, 30, TFT_BLUE);
     }
-    else if(live_status == 1)
+    else
     {
       tft.fillRect(170, 170, 60, 60, TFT_BLACK);
       tft.fillCircle(200, 200, circle_radius, TFT_GREENYELLOW);
@@ -136,6 +138,46 @@ void FrameUpdate()
   return;
 }
 
+void FrameInfoUpdate(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
+{
+  if(Bilibili_Vup.UpdateAll(Connection, http, jsonBuffer)!=STREAMER_UPDATE_ERR_SUCCESS)
+  {
+    return;
+  }
+
+  {
+    long follower;
+    tft.setCursor(0, 140);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.print("RoomID:");
+    tft.println(Bilibili_Vup.getRoomID());
+    follower = Bilibili_Vup.getFollower();
+    tft.print("Fans: ");
+    if(p_follower<follower) tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    else if(p_follower>follower) tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.println(follower);
+    p_follower = follower;
+  }
+
+  {
+    tft.setCursor(0, 200);
+    if( Bilibili_Vup.getLiveStatus() != LIVE_ONSTREAM)
+    {
+      tft.setTextColor(TFT_BLUE);
+      tft.fillRect(0, 200, 240, 40, TFT_BLACK);
+      tft.fillCircle(200, 200, 30, TFT_BLUE);
+      tft.print("Off Stream");
+    }
+    else
+    {
+      tft.setTextColor(TFT_GREENYELLOW);
+      tft.fillRect(0, 200, 240, 40, TFT_BLACK);
+      tft.print("On  Stream");
+    }
+  }
+}
+
+/*
 void getFollower(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
 {
   int httpCode;
@@ -158,7 +200,6 @@ void getFollower(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
     }
     follower = jsonBuffer["data"]["follower_num"];
     room_id = jsonBuffer["data"]["room_id"];
-    p_follower = follower;
     {
       tft.setCursor(0, 140);
       tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -169,6 +210,7 @@ void getFollower(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
       else if(p_follower>follower) tft.setTextColor(TFT_RED, TFT_BLACK);
       tft.println(follower);
     }
+    p_follower = follower;
   }
   else
   {
@@ -226,10 +268,4 @@ void getLiveStatus(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
   }
   http.end();
 }
-
-String int2str(int num)
-{
-  char buf[64] = "";
-  sprintf(buf,"%d",num);
-  return buf;
-}
+*/
