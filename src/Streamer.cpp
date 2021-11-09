@@ -7,7 +7,7 @@ String int2str(int num)
   return buf;
 }
 
-UpdateErr_t Streamer::UpdateStreamerInfo(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer)
+StreamUpdateErr_t Streamer::UpdateStreamerInfo(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer)
 {
     int httpCode;
     http.begin(Connection, LiverInfoUrl + this->UID);
@@ -51,7 +51,7 @@ UpdateErr_t Streamer::UpdateStreamerInfo(WiFiClient &Connection, HTTPClient &htt
     return STREAMER_UPDATE_ERR_SUCCESS;
 }
 
-UpdateErr_t Streamer::UpdateLiveStatus(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer)
+StreamUpdateErr_t Streamer::UpdateLiveStatus(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer)
 {
     int httpCode;
 
@@ -101,9 +101,9 @@ UpdateErr_t Streamer::UpdateLiveStatus(WiFiClient &Connection, HTTPClient &http,
     return STREAMER_UPDATE_ERR_SUCCESS;
 }
 
-UpdateErr_t Streamer::UpdateAll(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer)
+StreamUpdateErr_t Streamer::UpdateAll(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer)
 {
-    UpdateErr_t err = STREAMER_UPDATE_ERR_SUCCESS;
+    StreamUpdateErr_t err = STREAMER_UPDATE_ERR_SUCCESS;
     err = UpdateStreamerInfo(Connection, http, jsonBuffer);
     if(err != STREAMER_UPDATE_ERR_SUCCESS) return err;
     err = UpdateLiveStatus(Connection, http, jsonBuffer);

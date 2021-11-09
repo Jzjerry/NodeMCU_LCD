@@ -11,6 +11,7 @@
 // User Includes
 #include "wifi_config.h"
 #include "Streamer.h"
+#include "Simp.h"
 
 
 #define FRAME_INTERVAL 0.1 
@@ -36,7 +37,7 @@ String UID = "";
 void getFollower(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
 void getLiveStatus(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
 
-void FrameInfoUpdate(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
+void FrameInfoUpdate(Streamer &Bilibili_Vup);
 void FrameUpdate();
 String int2str(int num);
 
@@ -44,6 +45,7 @@ WiFiClient Connection = WiFiClient();
 TFT_eSPI tft = TFT_eSPI();
 Ticker ScreenUpdate;
 Streamer Bilibili_Vup;
+Simp Bilibili_Simp;
 
 
 void setup() 
@@ -90,11 +92,14 @@ void setup()
   */
 
   UID = "742139"; 
-  Bilibili_Vup = Streamer(UID);
+
+  Bilibili_Simp = Simp(UID);
+
   // 742139 Follow Jzjerry_Official PLZ!
   // 392505232 Andou Inari
   // 672328094 Diana, my Diana, heh heh, my Diana, take me, take me on, Diana!
-  tft.print("UID:");
+
+  tft.print("YourUID:");
   tft.println(UID);
 
   // Attach ticker to frame
@@ -104,10 +109,23 @@ void setup()
 
 void loop()
 {
-  DynamicJsonDocument jsonBuffer(1024); // ArduinoJson V6
+  DynamicJsonDocument jsonBuffer(4096); // ArduinoJson V6
   HTTPClient http;
-
-  FrameInfoUpdate(http, jsonBuffer);
+  
+  if(Bilibili_Simp.UpdateMembership(Connection, http, jsonBuffer) == STREAMER_UPDATE_ERR_SUCCESS)
+  {
+    #ifdef SERIAL_DEBUG
+      Serial.println("Update Membership Success");
+    #endif
+    Bilibili_Vup = Bilibili_Simp.getStreamer();
+    if(Bilibili_Vup.UpdateAll(Connection, http, jsonBuffer) == STREAMER_UPDATE_ERR_SUCCESS)
+    {
+      #ifdef SERIAL_DEBUG
+        Serial.println("Update All Success");
+      #endif
+      FrameInfoUpdate(Bilibili_Vup);
+    }
+  }
   
   if(!first_update) first_update = true;
 
@@ -138,24 +156,23 @@ void FrameUpdate()
   return;
 }
 
-void FrameInfoUpdate(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
+void FrameInfoUpdate(Streamer &Bilibili_Vup)
 {
-  if(Bilibili_Vup.UpdateAll(Connection, http, jsonBuffer)!=STREAMER_UPDATE_ERR_SUCCESS)
-  {
-    return;
-  }
-
   {
     long follower;
-    tft.setCursor(0, 140);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.print("RoomID:");
-    tft.println(Bilibili_Vup.getRoomID());
+    tft.fillRect(0, 140, 240, 40, TFT_BLACK); // Clear last time print
+    tft.setCursor(0, 140);
+    tft.print("LiverUID:");
+    tft.println(Bilibili_Vup.getUID());
+    // tft.print("RoomID:");
+    // tft.println(Bilibili_Vup.getRoomID()); // Too crowded to show
     follower = Bilibili_Vup.getFollower();
     tft.print("Fans: ");
     if(p_follower<follower) tft.setTextColor(TFT_GREEN, TFT_BLACK);
     else if(p_follower>follower) tft.setTextColor(TFT_RED, TFT_BLACK);
-    tft.println(follower);
+    tft.print(follower);
+    tft.print("     "); // Clean last time print
     p_follower = follower;
   }
 
@@ -165,7 +182,7 @@ void FrameInfoUpdate(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
     {
       tft.setTextColor(TFT_BLUE);
       tft.fillRect(0, 200, 240, 40, TFT_BLACK);
-      tft.fillCircle(200, 200, 30, TFT_BLUE);
+      tft.fillCircle(200, 200, 25, TFT_BLUE);
       tft.print("Off Stream");
     }
     else

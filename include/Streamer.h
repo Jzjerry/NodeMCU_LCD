@@ -5,14 +5,14 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
 
+#include "Platform_Select.h"
+
 /* TODO: 
   * Build a struct or class for UID and related info
-  * Store UID, room_id, live_status, follower, p_follower in it
+  * Store UID, room_id, live_status, follower in it
   * So that we can store different streamers and switch between them
   * Or maybe we can get your following list from the API
 */
-const String LiverInfoUrl = "http://api.live.bilibili.com/live_user/v1/Master/info?uid=";
-const String RoomInfoUrl = "http://api.live.bilibili.com/room/v1/Room/room_init?id=";
 
 enum LiveStatus_t {
   LIVE_OFFSTREAM,
@@ -21,7 +21,7 @@ enum LiveStatus_t {
   LIVE_UNKNOWN
 };
 
-enum UpdateErr_t{
+enum StreamUpdateErr_t{
     STREAMER_UPDATE_ERR_SUCCESS,
     STREAMER_UPDATE_ERR_JSON_FAIL,
     STREAMER_UPDATE_ERR_HTTP_FAIL,
@@ -41,9 +41,9 @@ class Streamer
             this->p_follower = 0;
         };
         ~Streamer(){};
-        UpdateErr_t UpdateLiveStatus(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer);
-        UpdateErr_t UpdateStreamerInfo(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer);
-        UpdateErr_t UpdateAll(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer);
+        StreamUpdateErr_t UpdateLiveStatus(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer);
+        StreamUpdateErr_t UpdateStreamerInfo(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer);
+        StreamUpdateErr_t UpdateAll(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer);
 
         String getUID() { return this->UID; };
         String getRoomID() { return this->room_id; };
@@ -57,4 +57,6 @@ class Streamer
         long follower;
         long p_follower; // should be removed
 };
+
+String int2str(int num);
 #endif
