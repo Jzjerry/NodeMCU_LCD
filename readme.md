@@ -1,6 +1,9 @@
 # NodeMCU_LCD
 ## Overview
 A simple monitor for Bilibili livers based on ESP8266 & TFT_eSPI
+
+<img src="/pic/demo.jpg" alt="demo" style="zoom:50%;" />
+
 ## Features
 + Get basic info from Bilibili API for UID you set.
 + Update follower number per seconds.
