@@ -163,7 +163,7 @@ void FrameInfoUpdate(Streamer &Bilibili_Vup)
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.fillRect(0, 140, 240, 40, TFT_BLACK); // Clear last time print
     tft.setCursor(0, 140);
-    tft.print("LiverUID:");
+    tft.print("VupUID:");
     tft.println(Bilibili_Vup.getUID());
     // tft.print("RoomID:");
     // tft.println(Bilibili_Vup.getRoomID()); // Too crowded to show
@@ -172,7 +172,7 @@ void FrameInfoUpdate(Streamer &Bilibili_Vup)
     if(p_follower<follower) tft.setTextColor(TFT_GREEN, TFT_BLACK);
     else if(p_follower>follower) tft.setTextColor(TFT_RED, TFT_BLACK);
     tft.print(follower);
-    tft.print("     "); // Clean last time print
+    tft.print("       "); // Clean last time print
     p_follower = follower;
   }
 
