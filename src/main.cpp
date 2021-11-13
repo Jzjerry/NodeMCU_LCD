@@ -4,6 +4,7 @@
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
+#include <lvgl.h>
 
 #include <stdio.h>
 
@@ -37,8 +38,9 @@ String UID = "";
 void getFollower(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
 void getLiveStatus(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
 
-void FrameInfoUpdate(Streamer &Bilibili_Vup);
-void FrameUpdate();
+void FrameInfoUpdate(Streamer *Streamer_ptr);
+void FrameAnimationUpdate(Streamer *Streamer_ptr);
+
 String int2str(int num);
 
 WiFiClient Connection = WiFiClient();
@@ -103,7 +105,7 @@ void setup()
   tft.println(UID);
 
   // Attach ticker to frame
-  ScreenUpdate.attach( FRAME_INTERVAL, FrameUpdate);
+  ScreenUpdate.attach( FRAME_INTERVAL, FrameAnimationUpdate, &Bilibili_Vup);
 
 }
 
@@ -123,7 +125,7 @@ void loop()
       #ifdef SERIAL_DEBUG
         Serial.println("Update All Success");
       #endif
-      FrameInfoUpdate(Bilibili_Vup);
+      FrameInfoUpdate(&Bilibili_Vup);
     }
   }
   
@@ -132,14 +134,14 @@ void loop()
   delay(HTTP_INTERVAL);
 }
 
-void FrameUpdate()
+void FrameAnimationUpdate(Streamer *Streamer_ptr)
 {
   static long circle_radius = 10;
   static long radius_inc = 2;
 
   if(first_update)
   {
-    if(Bilibili_Vup.getLiveStatus() != LIVE_ONSTREAM)
+    if(Streamer_ptr->getLiveStatus() != LIVE_ONSTREAM)
     {
       // tft.fillRect(170, 170, 60, 60, TFT_BLACK);
       // tft.fillCircle(200, 200, 30, TFT_BLUE);
@@ -156,7 +158,7 @@ void FrameUpdate()
   return;
 }
 
-void FrameInfoUpdate(Streamer &Bilibili_Vup)
+void FrameInfoUpdate(Streamer *Streamer_ptr)
 {
   {
     long follower;
@@ -164,10 +166,10 @@ void FrameInfoUpdate(Streamer &Bilibili_Vup)
     tft.fillRect(0, 140, 240, 40, TFT_BLACK); // Clear last time print
     tft.setCursor(0, 140);
     tft.print("VupUID:");
-    tft.println(Bilibili_Vup.getUID());
+    tft.println(Streamer_ptr->getUID());
     // tft.print("RoomID:");
     // tft.println(Bilibili_Vup.getRoomID()); // Too crowded to show
-    follower = Bilibili_Vup.getFollower();
+    follower = Streamer_ptr->getFollower();
     tft.print("Fans: ");
     if(p_follower<follower) tft.setTextColor(TFT_GREEN, TFT_BLACK);
     else if(p_follower>follower) tft.setTextColor(TFT_RED, TFT_BLACK);
@@ -178,7 +180,7 @@ void FrameInfoUpdate(Streamer &Bilibili_Vup)
 
   {
     tft.setCursor(0, 200);
-    if( Bilibili_Vup.getLiveStatus() != LIVE_ONSTREAM)
+    if( Streamer_ptr->getLiveStatus() != LIVE_ONSTREAM)
     {
       tft.setTextColor(TFT_BLUE);
       tft.fillRect(0, 200, 240, 40, TFT_BLACK);

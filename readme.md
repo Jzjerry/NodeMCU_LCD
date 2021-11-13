@@ -48,7 +48,6 @@ Future Plan: Build a series of modules derived from the current one, such as Ban
 ## Acknowledgment
 
 + TFT_eSPI@Bodmer (https://github.com/Bodmer/TFT_eSPI)
-
++ lvgl@lvgl (https://github.com/lvgl/lvgl)
 + ArduinoJson@bblanchon (https://github.com/bblanchon/ArduinoJson)
-
 + bilibili-API-collect@SocialSisterYi (https://github.com/SocialSisterYi/bilibili-API-collect)
