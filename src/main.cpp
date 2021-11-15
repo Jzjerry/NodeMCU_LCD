@@ -4,13 +4,14 @@
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
-#include <lvgl.h>
+// #include <lvgl.h>
 
 #include <stdio.h>
 
 
 // User Includes
 #include "wifi_config.h"
+// #include "lvgl_port.h"
 #include "Streamer.h"
 #include "Simp.h"
 
@@ -53,6 +54,7 @@ Simp Bilibili_Simp;
 void setup() 
 {
   Serial.begin(115200);
+  // lv_init();
 
   tft.init();
   tft.fillScreen(TFT_BLACK);
@@ -196,95 +198,3 @@ void FrameInfoUpdate(Streamer *Streamer_ptr)
   }
 }
 
-/*
-void getFollower(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
-{
-  int httpCode;
-  http.begin(Connection, LiverInfoUrl + UID);
-  httpCode = http.GET();
-  Serial.println("Request Send");
-  if (httpCode == 200)
-  {
-    Serial.println("Get OK");
-    String resBuff = http.getString();
-
-    // ---------- ArduinoJson V6 ----------
-    // JsonObject root = jsonBuffer.parseObject(resBuff);
-    auto error = deserializeJson(jsonBuffer, resBuff);
-    if (error)
-    {
-      // Serial.print("deserializeJson failed: ");
-      // Serial.println(error.c_str());
-      return;
-    }
-    follower = jsonBuffer["data"]["follower_num"];
-    room_id = jsonBuffer["data"]["room_id"];
-    {
-      tft.setCursor(0, 140);
-      tft.setTextColor(TFT_WHITE, TFT_BLACK);
-      tft.print("RoomID:");
-      tft.println(room_id);
-      tft.print("Fans: ");
-      if(p_follower<follower) tft.setTextColor(TFT_GREEN, TFT_BLACK);
-      else if(p_follower>follower) tft.setTextColor(TFT_RED, TFT_BLACK);
-      tft.println(follower);
-    }
-    p_follower = follower;
-  }
-  else
-  {
-    // HTTP GET Fail
-    Serial.print("HTTP GET FAIL, CODE:");
-    Serial.println(httpCode);
-  }
-  http.end();
-}
-
-void getLiveStatus(HTTPClient &http, DynamicJsonDocument &jsonBuffer)
-{
-  int httpCode;
-  String room_id_str;
-
-  room_id_str = int2str(room_id);
-  http.begin(Connection, (RoomInfoUrl + room_id_str));
-  httpCode = http.GET();
-  Serial.println("Request Send");
-  if (httpCode == 200)
-  {
-    Serial.println("Get OK");
-    String resBuff = http.getString();
-
-    // ---------- ArduinoJson V6 ----------
-    // JsonObject root = jsonBuffer.parseObject(resBuff);
-    auto error = deserializeJson(jsonBuffer, resBuff);
-    if (error)
-    {
-      // Serial.print("deserializeJson failed: ");
-      // Serial.println(error.c_str());
-      return;
-    }
-    live_status = jsonBuffer["data"]["live_status"];
-    tft.setCursor(0, 200);
-    if(live_status == 0||live_status == 2)
-    {
-      tft.setTextColor(TFT_BLUE);
-      tft.fillRect(0, 200, 240, 40, TFT_BLACK);
-      tft.fillCircle(200, 200, 30, TFT_BLUE);
-      tft.print("Off Stream");
-    }
-    else if(live_status == 1)
-    {
-      tft.setTextColor(TFT_GREENYELLOW);
-      tft.fillRect(0, 200, 240, 40, TFT_BLACK);
-      tft.print("On  Stream");
-    }
-  }
-  else
-  {
-    // HTTP GET Fail
-    Serial.print("HTTP GET FAIL, CODE:");
-    Serial.println(httpCode);
-  }
-  http.end();
-}
-*/
