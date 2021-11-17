@@ -4,20 +4,19 @@
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
-// #include <lvgl.h>
+#include <lvgl.h>
 
 #include <stdio.h>
 
 
 // User Includes
 #include "wifi_config.h"
-// #include "lvgl_port.h"
+#include "lvgl_port.h"
 #include "Streamer.h"
 #include "Simp.h"
 
-
-#define FRAME_INTERVAL 0.1 
-// Seconds
+#define FRAME_INTERVAL 20
+// Milliseconds
 // High FPS leads to some glitching in the frame
 
 #define HTTP_INTERVAL 2000
@@ -26,19 +25,13 @@
 const char *UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36 OPR/75.0.3969.218";
 
 long p_follower = 0;
-// long follower = 0;
-// long room_id = 0;
-// int live_status = 0;
 bool first_update = false;
+bool is_lv_init = false;
 
 
 String UID = "";
-// String LiverInfoUrl = "http://api.live.bilibili.com/live_user/v1/Master/info?uid=";
-// String RoomInfoUrl = "http://api.live.bilibili.com/room/v1/Room/room_init?id=";
 
-void getFollower(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
-void getLiveStatus(HTTPClient &http, DynamicJsonDocument &jsonBuffer);
-
+void lv_ui_init(void);
 void FrameInfoUpdate(Streamer *Streamer_ptr);
 void FrameAnimationUpdate(Streamer *Streamer_ptr);
 
@@ -46,44 +39,77 @@ String int2str(int num);
 
 WiFiClient Connection = WiFiClient();
 TFT_eSPI tft = TFT_eSPI();
-Ticker ScreenUpdate;
+Ticker TickerUpdate;
 Streamer Bilibili_Vup;
 Simp Bilibili_Simp;
 
+static const uint32_t screenWidth  = 240;
+static const uint32_t screenHeight = 240;
+
+static lv_disp_draw_buf_t draw_buf;
+static lv_color_t buf[ screenWidth * 10 ];
+
+static void lv_update()
+{
+  lv_timer_handler();
+}
 
 void setup() 
 {
   Serial.begin(115200);
-  // lv_init();
+  lv_init();
 
   tft.init();
   tft.fillScreen(TFT_BLACK);
   tft.setRotation(1);
-  tft.setCursor(0, 20);
-  tft.setTextFont(4);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.println("Connecting");
+
+  lv_disp_draw_buf_init( &draw_buf, buf, NULL, screenWidth * 10 );
+
+  /*Initialize the display*/
+  static lv_disp_drv_t disp_drv;
+  lv_disp_drv_init( &disp_drv );
+  /*Change the following line to your display resolution*/
+  disp_drv.hor_res = screenWidth;
+  disp_drv.ver_res = screenHeight;
+  disp_drv.flush_cb = my_disp_flush;
+  disp_drv.draw_buf = &draw_buf;
+  lv_disp_drv_register( &disp_drv );
+
+
+  TickerUpdate.attach_ms( FRAME_INTERVAL, lv_update);
+  // tft.setCursor(0, 20);
+  // tft.setTextFont(4);
+  // tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  // tft.println("Connecting");
+  lv_obj_t * loading_bar = lv_bar_create(lv_scr_act());
+  lv_obj_set_size(loading_bar, 200, 30);
+  lv_obj_center(loading_bar);
+  lv_bar_set_value(loading_bar, 0, LV_ANIM_OFF);
+  
+  lv_obj_t * loading_label = lv_label_create(lv_scr_act());
+  lv_label_set_text(loading_label, "Connecting");
+  lv_obj_align_to(loading_label, loading_bar, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
   // Connect to WiFi
   WiFi.begin(ssid, passwd);
+  int i = 0;
   while (WiFi.status() != WL_CONNECTED) {
+    i = i + 5;
+    lv_bar_set_value(loading_bar, i, LV_ANIM_OFF);
     delay(500);
     Serial.print(".");
-    tft.print(".");
   }
   Serial.println("");
   Serial.println("WiFi connected");
-
-  tft.setCursor(0, 20);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.println("Connected \n");
-  
+  lv_bar_set_value(loading_bar, 100, LV_ANIM_ON);
 
   // Print the IP address
   Serial.println(WiFi.localIP());
-  tft.println(WiFi.localIP());
-
-  
+  lv_label_set_text_fmt(loading_label, "Connected\n%s",
+                        WiFi.localIP().toString().c_str());
+  // tft.println(WiFi.localIP());
+  delay(5000);
+  lv_obj_clean(lv_scr_act());
   // Get UID from Serial Port
   /*
   Serial.println("Please input your UID:");
@@ -103,38 +129,31 @@ void setup()
   // 392505232 Andou Inari
   // 672328094 Diana, my Diana, heh heh, my Diana, take me, take me on, Diana!
 
-  tft.print("YourUID:");
-  tft.println(UID);
-
   // Attach ticker to frame
-  ScreenUpdate.attach( FRAME_INTERVAL, FrameAnimationUpdate, &Bilibili_Vup);
-
+  // TickerUpdate.attach(2, Ticker_loop);
 }
 
 void loop()
-{
-  DynamicJsonDocument jsonBuffer(4096); // ArduinoJson V6
+{  
   HTTPClient http;
-  
+  DynamicJsonDocument jsonBuffer(4096); // ArduinoJson V6
   if(Bilibili_Simp.UpdateMembership(Connection, http, jsonBuffer) == STREAMER_UPDATE_ERR_SUCCESS)
   {
     #ifdef SERIAL_DEBUG
-      Serial.println("Update Membership Success");
+    Serial.println("Update Membership Success");
     #endif
     Bilibili_Vup = Bilibili_Simp.getStreamer();
     if(Bilibili_Vup.UpdateAll(Connection, http, jsonBuffer) == STREAMER_UPDATE_ERR_SUCCESS)
     {
       #ifdef SERIAL_DEBUG
-        Serial.println("Update All Success");
+      Serial.println("Update All Success");
       #endif
-      FrameInfoUpdate(&Bilibili_Vup);
     }
   }
-  
-  if(!first_update) first_update = true;
-
   delay(HTTP_INTERVAL);
 }
+
+
 
 void FrameAnimationUpdate(Streamer *Streamer_ptr)
 {
