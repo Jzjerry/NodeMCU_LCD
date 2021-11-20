@@ -12,6 +12,7 @@
 // User Includes
 #include "wifi_config.h"
 #include "lvgl_port.h"
+#include "display.h"
 #include "Streamer.h"
 #include "Simp.h"
 
@@ -32,6 +33,7 @@ bool is_lv_init = false;
 String UID = "";
 
 void lv_ui_init(void);
+void lv_ui_update(Streamer *Streamer_ptr);
 void FrameInfoUpdate(Streamer *Streamer_ptr);
 void FrameAnimationUpdate(Streamer *Streamer_ptr);
 
@@ -108,8 +110,9 @@ void setup()
   lv_label_set_text_fmt(loading_label, "Connected\n%s",
                         WiFi.localIP().toString().c_str());
   // tft.println(WiFi.localIP());
-  delay(5000);
-  lv_obj_clean(lv_scr_act());
+  delay(500);
+  display_init();
+
   // Get UID from Serial Port
   /*
   Serial.println("Please input your UID:");
@@ -148,11 +151,11 @@ void loop()
       #ifdef SERIAL_DEBUG
       Serial.println("Update All Success");
       #endif
+      display_update(&Bilibili_Vup);
     }
   }
   delay(HTTP_INTERVAL);
 }
-
 
 
 void FrameAnimationUpdate(Streamer *Streamer_ptr)
