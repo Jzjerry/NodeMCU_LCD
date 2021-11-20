@@ -4,7 +4,6 @@ static lv_obj_t * label_UID;
 static lv_obj_t * label_Followers;
 static lv_obj_t * label_Onstream;
 static lv_obj_t * circle_Onstream;
-static lv_obj_t * circle_bg;
 
 
 static void anim_size_cb(void * var, int32_t v)
@@ -35,9 +34,7 @@ void display_init()
     lv_obj_align(circle_Onstream, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_style_radius(circle_Onstream, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_opa(circle_Onstream, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(circle_Onstream, 5, 0);
-    lv_obj_set_style_border_color(circle_Onstream, lv_palette_main(LV_PALETTE_LIGHT_GREEN), 0);
-    // lv_obj_set_style_bg_color(circle_Onstream, lv_palette_main(LV_PALETTE_LIGHT_GREEN), 0);
+    lv_obj_set_style_bg_color(circle_Onstream, lv_palette_main(LV_PALETTE_LIGHT_GREEN), 0);
 
 }
 
@@ -52,14 +49,16 @@ void display_update(Streamer *Streamer_ptr)
         lv_anim_t anim_Onstream;
         lv_anim_init(&anim_Onstream);
         lv_anim_set_var(&anim_Onstream, circle_Onstream);
-        lv_anim_set_values(&anim_Onstream, 0, 120);
-        lv_anim_set_time(&anim_Onstream, 1000);
-        lv_anim_set_path_cb(&anim_Onstream, lv_anim_path_linear);
+        lv_anim_set_values(&anim_Onstream, 100, 120);
+        lv_anim_set_time(&anim_Onstream, 500);
+        lv_anim_set_playback_delay(&anim_Onstream, 0);
+        lv_anim_set_playback_time(&anim_Onstream, 500);
+        lv_anim_set_path_cb(&anim_Onstream, lv_anim_path_ease_in_out);
         lv_anim_set_exec_cb(&anim_Onstream, anim_size_cb);
         lv_anim_start(&anim_Onstream);
     
         lv_anim_set_exec_cb(&anim_Onstream, anim_opa_cb);
-        lv_anim_set_values(&anim_Onstream, 255, 0);
+        lv_anim_set_values(&anim_Onstream, 255, 200);
         lv_anim_start(&anim_Onstream);
     }
     else
