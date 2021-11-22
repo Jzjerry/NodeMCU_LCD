@@ -6,7 +6,18 @@
 
 #include "Streamer.h"
 
+
+enum display_error_t
+{
+    DISPLAY_SUCCESS,
+    DISPLAY_SIMP_FAIL,
+    DISPLAY_STREAMER_FAIL,
+    DISPLAY_DEFAULT
+};
+
+
 void display_init();
 void display_update(Streamer *Streamer_ptr);
+void display_error(display_error_t err);
 
 #endif

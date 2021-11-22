@@ -153,6 +153,14 @@ void loop()
       #endif
       display_update(&Bilibili_Vup);
     }
+    else
+    {
+      display_error(DISPLAY_STREAMER_FAIL);
+    }
+  }
+  else
+  {
+    display_error(DISPLAY_SIMP_FAIL);
   }
   delay(HTTP_INTERVAL);
 }
