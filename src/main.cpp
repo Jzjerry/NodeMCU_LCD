@@ -5,6 +5,7 @@
 #include <SPI.h>
 #include <TFT_eSPI.h>
 #include <lvgl.h>
+#include <LittleFS.h>
 
 #include <stdio.h>
 
@@ -12,6 +13,7 @@
 // User Includes
 #include "wifi_config.h"
 #include "lvgl_port.h"
+#include "lv_port_fs.h"
 #include "display.h"
 #include "Streamer.h"
 #include "Simp.h"
@@ -34,8 +36,7 @@ String UID = "";
 
 void lv_ui_init(void);
 void lv_ui_update(Streamer *Streamer_ptr);
-void FrameInfoUpdate(Streamer *Streamer_ptr);
-void FrameAnimationUpdate(Streamer *Streamer_ptr);
+void fs_test();
 
 String int2str(int num);
 
@@ -59,11 +60,18 @@ static void lv_update()
 void setup() 
 {
   Serial.begin(115200);
+  LittleFS.begin();
+
   lv_init();
+  lv_port_fs_init();
+
+  fs_test();
 
   tft.init();
   tft.fillScreen(TFT_BLACK);
   tft.setRotation(1);
+
+  tft.setSwapBytes(true);
 
   lv_disp_draw_buf_init( &draw_buf, buf, NULL, screenWidth * 10 );
 
@@ -76,7 +84,6 @@ void setup()
   disp_drv.flush_cb = my_disp_flush;
   disp_drv.draw_buf = &draw_buf;
   lv_disp_drv_register( &disp_drv );
-
 
   TickerUpdate.attach_ms( FRAME_INTERVAL, lv_update);
   // tft.setCursor(0, 20);
@@ -96,7 +103,7 @@ void setup()
   WiFi.begin(ssid, passwd);
   int i = 0;
   while (WiFi.status() != WL_CONNECTED) {
-    i = i + 5;
+    i = (i<100)? i + 5 : 95;
     lv_bar_set_value(loading_bar, i, LV_ANIM_OFF);
     delay(500);
     Serial.print(".");
@@ -146,85 +153,43 @@ void loop()
     Serial.println("Update Membership Success");
     #endif
     Bilibili_Vup = Bilibili_Simp.getStreamer();
-    if(Bilibili_Vup.UpdateAll(Connection, http, jsonBuffer) == STREAMER_UPDATE_ERR_SUCCESS)
-    {
-      #ifdef SERIAL_DEBUG
-      Serial.println("Update All Success");
-      #endif
-      display_update(&Bilibili_Vup);
-    }
-    else
-    {
-      display_error(DISPLAY_STREAMER_FAIL);
-    }
   }
   else
   {
     display_error(DISPLAY_SIMP_FAIL);
   }
+
+  if(Bilibili_Vup.UpdateAll(Connection, http, jsonBuffer) == STREAMER_UPDATE_ERR_SUCCESS)
+  {
+      #ifdef SERIAL_DEBUG
+      Serial.println("Update All Success");
+      #endif
+      display_update(&Bilibili_Vup);
+  }
+  else
+  {
+    display_error(DISPLAY_STREAMER_FAIL);
+  }
+
   delay(HTTP_INTERVAL);
 }
 
-
-void FrameAnimationUpdate(Streamer *Streamer_ptr)
+void fs_test()
 {
-  static long circle_radius = 10;
-  static long radius_inc = 2;
+  lv_fs_file_t f;
+  lv_fs_res_t res;
 
-  if(first_update)
-  {
-    if(Streamer_ptr->getLiveStatus() != LIVE_ONSTREAM)
-    {
-      // tft.fillRect(170, 170, 60, 60, TFT_BLACK);
-      // tft.fillCircle(200, 200, 30, TFT_BLUE);
-    }
-    else
-    {
-      tft.fillRect(170, 170, 60, 60, TFT_BLACK);
-      tft.fillCircle(200, 200, circle_radius, TFT_GREENYELLOW);
-      circle_radius += radius_inc;
-      if(circle_radius>=25||circle_radius<=10) radius_inc = -radius_inc;
-    }
+  res = lv_fs_open(&f, "P:/fstest.txt", LV_FS_MODE_RD);
 
-  }
-  return;
+  if(res == LV_FS_RES_OK) Serial.println("File open failed");
+  else Serial.println("File open success");
+
+
+  uint32_t read_num;
+  uint8_t buf[8];
+  res = lv_fs_read(&f, buf, 8, &read_num);
+  Serial.println("expected read bytes: 8");
+  Serial.printf("actual read bytes %d\n", read_num);
+
+  lv_fs_close(&f);
 }
-
-void FrameInfoUpdate(Streamer *Streamer_ptr)
-{
-  {
-    long follower;
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.fillRect(0, 140, 240, 40, TFT_BLACK); // Clear last time print
-    tft.setCursor(0, 140);
-    tft.print("VupUID:");
-    tft.println(Streamer_ptr->getUID());
-    // tft.print("RoomID:");
-    // tft.println(Bilibili_Vup.getRoomID()); // Too crowded to show
-    follower = Streamer_ptr->getFollower();
-    tft.print("Fans: ");
-    if(p_follower<follower) tft.setTextColor(TFT_GREEN, TFT_BLACK);
-    else if(p_follower>follower) tft.setTextColor(TFT_RED, TFT_BLACK);
-    tft.print(follower);
-    tft.print("       "); // Clean last time print
-    p_follower = follower;
-  }
-
-  {
-    tft.setCursor(0, 200);
-    if( Streamer_ptr->getLiveStatus() != LIVE_ONSTREAM)
-    {
-      tft.setTextColor(TFT_BLUE);
-      tft.fillRect(0, 200, 240, 40, TFT_BLACK);
-      tft.fillCircle(200, 200, 25, TFT_BLUE);
-      tft.print("Off Stream");
-    }
-    else
-    {
-      tft.setTextColor(TFT_GREENYELLOW);
-      tft.fillRect(0, 200, 240, 40, TFT_BLACK);
-      tft.print("On  Stream");
-    }
-  }
-}
-
