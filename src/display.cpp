@@ -33,6 +33,7 @@ void display_init()
     label_WifiConnection = lv_label_create(lv_scr_act());
 
 
+
     lv_obj_align(label_UID, LV_ALIGN_TOP_MID, 0, 10);
     lv_obj_align(label_Followers, LV_ALIGN_BOTTOM_MID, 0, -10);
     lv_obj_align(label_Onstream, LV_ALIGN_CENTER, 0, 0);
@@ -97,10 +98,10 @@ void display_error(display_error_t err)
     switch(err)
     {
         case DISPLAY_SIMP_FAIL:
-            lv_obj_set_style_text_color(label_Warning, lv_palette_main(LV_PALETTE_RED), 0);
+            lv_obj_set_style_text_color(label_Warning, lv_palette_main(LV_PALETTE_YELLOW), 0);
             break;
         case DISPLAY_STREAMER_FAIL:
-            lv_obj_set_style_text_color(label_Warning, lv_palette_main(LV_PALETTE_YELLOW), 0);
+            lv_obj_set_style_text_color(label_Warning, lv_palette_main(LV_PALETTE_RED), 0);
             break;
         default:
             lv_obj_set_style_text_color(label_Warning, lv_palette_main(LV_PALETTE_GREY), 0);

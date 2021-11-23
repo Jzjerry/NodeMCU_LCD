@@ -27,6 +27,12 @@ Future Plan: Build a series of modules derived from the current one, such as Ban
 + Build it. Flash it. Done. (the wiring between ESP8266 board and LCD Screen differs)
 
 ## Changelog
+
+### 2021/11/23
++ LVGL version basic updates.
++ Add LittleFS file system support and LVGL file system porting.
++ rework animation based on LVGL.
++ Tried to use LittleFS to display some full size images but failed due to slow flash read speed.
 ### 2021/11/9
 + Add new class for user information(`class Simp`)
 + Now you can obtain the Streamer UID from your account by wearing the streamer's medal(Bilibili Fan medal)

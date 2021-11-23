@@ -4,6 +4,7 @@
 #include <TFT_eSPI.h>
 #include <ESP8266WiFi.h>
 
+#include "lv_port_fs.h"
 #include "Streamer.h"
 
 
