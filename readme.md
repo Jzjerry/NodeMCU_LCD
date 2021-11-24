@@ -5,7 +5,7 @@
 
 A simple monitor based on ESP8266 & TFT_eSPI for Bilibili streamer's information display.
 
-<img src=".\pic\demo.jpg" alt="demo" style="zoom:50%;" />
+<img src=".\pic\demo_lvgl.jpg" alt="demo" style="zoom:50%;" />
 
 画饼：将来会基于该项目和这两个元件出衍生一系列的其他小模块，例如：追番助手、弹幕姬、邮箱显示器、RSS订阅显示器...
 
