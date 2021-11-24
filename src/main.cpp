@@ -138,15 +138,13 @@ void setup()
   // 742139 Follow Jzjerry_Official PLZ!
   // 392505232 Andou Inari
   // 672328094 Diana, my Diana, heh heh, my Diana, take me, take me on, Diana!
-
-  // Attach ticker to frame
-  // TickerUpdate.attach(2, Ticker_loop);
 }
 
 void loop()
 {  
   HTTPClient http;
-  DynamicJsonDocument jsonBuffer(4096); // ArduinoJson V6
+  DynamicJsonDocument jsonBuffer(2048); // ArduinoJson V6
+  http.setUserAgent(UserAgent);
   if(Bilibili_Simp.UpdateMembership(Connection, http, jsonBuffer) == STREAMER_UPDATE_ERR_SUCCESS)
   {
     #ifdef SERIAL_DEBUG

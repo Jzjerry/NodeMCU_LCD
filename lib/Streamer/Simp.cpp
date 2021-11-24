@@ -1,21 +1,24 @@
 #include "Simp.h"
 
+StaticJsonDocument<200> filter;
+
 StreamUpdateErr_t Simp::UpdateMembership(WiFiClient &Connection, HTTPClient &http, DynamicJsonDocument &jsonBuffer)
 {
     int httpCode;
     http.begin(Connection, MemberInfoUrl + this->UID);
     httpCode = http.GET();
+    filter["data"]["fans_medal"] = true;
     #ifdef SERIAL_DEBUG
-        Serial.print("HTTP Code: ");
-        Serial.println(httpCode);
+        // Serial.print("HTTP Code: ");
+        // Serial.println(httpCode);
     #endif
     if (httpCode == 200)
     {
-        String resBuff = http.getString();
+        // String resBuff = http.getString();
 
         // ---------- ArduinoJson V6 ----------
         // JsonObject root = jsonBuffer.parseObject(resBuff);
-        auto error = deserializeJson(jsonBuffer, resBuff);
+        auto error = deserializeJson(jsonBuffer, http.getString(), DeserializationOption::Filter(filter));
         if (error)
         {
             #ifdef SERIAL_DEBUG

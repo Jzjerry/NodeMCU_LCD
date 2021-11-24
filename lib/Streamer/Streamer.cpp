@@ -13,16 +13,14 @@ StreamUpdateErr_t Streamer::UpdateStreamerInfo(WiFiClient &Connection, HTTPClien
     http.begin(Connection, LiverInfoUrl + this->UID);
     httpCode = http.GET();
     #ifdef SERIAL_DEBUG
-        Serial.print("HTTP Code: ");
-        Serial.println(httpCode);
+        // Serial.print("HTTP Code: ");
+        // Serial.println(httpCode);
     #endif
     if (httpCode == 200)
     {
-        String resBuff = http.getString();
-
         // ---------- ArduinoJson V6 ----------
         // JsonObject root = jsonBuffer.parseObject(resBuff);
-        auto error = deserializeJson(jsonBuffer, resBuff);
+        auto error = deserializeJson(jsonBuffer, http.getString());
         if (error)
         {
         // Serial.print("deserializeJson failed: ");
@@ -60,13 +58,12 @@ StreamUpdateErr_t Streamer::UpdateLiveStatus(WiFiClient &Connection, HTTPClient 
     if (httpCode == 200)
     {
     #ifdef SERIAL_DEBUG
-        Serial.print("HTTP Code: ");
-        Serial.println(httpCode);
+        // Serial.print("HTTP Code: ");
+        // Serial.println(httpCode);
     #endif
-        String resBuff = http.getString();
     // ---------- ArduinoJson V6 ----------
     // JsonObject root = jsonBuffer.parseObject(resBuff);
-        auto error = deserializeJson(jsonBuffer, resBuff);
+        auto error = deserializeJson(jsonBuffer, http.getString());
         if (error)
         {
             // Serial.print("deserializeJson failed: ");
@@ -74,21 +71,6 @@ StreamUpdateErr_t Streamer::UpdateLiveStatus(WiFiClient &Connection, HTTPClient 
             return STREAMER_UPDATE_ERR_JSON_FAIL;
         }
         this->live_status = (LiveStatus_t)jsonBuffer["data"]["live_status"];
-        /* This part should be moved to frame update function */
-        // tft.setCursor(0, 200);
-        // if(live_status == 0||live_status == 2)
-        // {
-        //     tft.setTextColor(TFT_BLUE);
-        //     tft.fillRect(0, 200, 240, 40, TFT_BLACK);
-        //     tft.fillCircle(200, 200, 30, TFT_BLUE);
-        //     tft.print("Off Stream");
-        // }
-        // else if(live_status == 1)
-        // {
-        //     tft.setTextColor(TFT_GREENYELLOW);
-        //     tft.fillRect(0, 200, 240, 40, TFT_BLACK);
-        //     tft.print("On  Stream");
-        // }
     }
     else
     {
